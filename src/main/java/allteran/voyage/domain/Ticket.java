@@ -13,29 +13,29 @@ public class Ticket {
     @GeneratedValue
     private Long id;
 
-    private LocalDate issueDate;
-    private LocalDate departureDate;
+    private LocalDate issueDate;//*
+    private LocalDate departureDate;//*
 
-    private String reservationNumber;
-    private String ticketNumber;
+    private String reservationNumber;//*
+    private String ticketNumber;//*
 
-    private String customer;
-    private String flightRoute;
+    private String customer; //*
+    private String flightRoute;//*
 
-    private int price;
+    private int price;//*
 
     @ManyToOne
     @JoinColumn(name = "type_id")
-    private TicketType type;
+    private TicketType type;//*
 
-    private String passport;
+    private String passport;//*
 
-    private LocalDate dateOfBirth;
-    private String customerPhone;
+    private LocalDate dateOfBirth;//*
+    private String customerPhone; //*
 
     @ManyToOne
     @JoinColumn(name = "status_id")
     private TicketStatus status;
 
-    private String comment;
+    private String comment;//*
 }
