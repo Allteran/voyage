@@ -13,6 +13,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.select.Select;
@@ -36,28 +37,27 @@ public class TicketEditor extends Dialog {
     private Binder<Ticket> binder = new Binder<>(Ticket.class);
 
     @Setter
-    private ChangeHandler changeHandler;
+    private String headerTitle = "Детали билета";
     @Setter
-    private String headerTitle;
+    private ChangeHandler changeHandler;
 
     private TextField customer;
-    private TextField phone;
+    private TextField customerPhone;
     private TextField passport;
     private TextField reservationNumber;
     private TextField ticketNumber;
-    private TextField route;
+    private TextField flightRoute;
     private TextField price;
     private TextField comment;
     private DatePicker issueDate;
     private DatePicker departureDate;
     private DatePicker dateOfBirth;
-    private Select<TicketType> typeSelector;
-    private Select<TicketStatus> statusSelector;
+    private Select<TicketType> type;
+    private Select<TicketStatus> status;
 
     public interface ChangeHandler {
-        void onChange();
+        public void onChange();
     }
-
 
     @Autowired
     public TicketEditor(TicketService ticketService, TicketTypeService typeService, TicketStatusService statusService) {
@@ -83,11 +83,11 @@ public class TicketEditor extends Dialog {
                 .set("font-size", "1.5em").set("font-weight", "bold");
 
         customer = new TextField("ФИО Пассажира");
-        phone = new TextField("Контактный телефон");
+        customerPhone = new TextField("Контактный телефон");
         passport = new TextField("Пасспортные данные");
         reservationNumber = new TextField("Номер брони");
         ticketNumber = new TextField("Номер билета");
-        route = new TextField("Полетный маршрут");
+        flightRoute = new TextField("Полетный маршрут");
         price = new TextField("Цена");
         comment = new TextField("Комментарий");
 
@@ -95,30 +95,30 @@ public class TicketEditor extends Dialog {
         departureDate = new DatePicker("Дата вылета");
         dateOfBirth = new DatePicker("Дата рождения");
 
-        typeSelector = new Select<>();
-        typeSelector.setLabel("Тип выписки");
-        typeSelector.setItemLabelGenerator(TicketType::getName);
-        typeSelector.setItems(typeService.findAll());
+        type = new Select<>();
+        type.setLabel("Тип выписки");
+        type.setItemLabelGenerator(TicketType::getName);
+        type.setItems(typeService.findAll());
 
-        statusSelector = new Select<>();
-        statusSelector.setLabel("Статус купона");
-        statusSelector.setItemLabelGenerator(TicketStatus::getName);
-        statusSelector.setItems(statusService.findAll());
+        status = new Select<>();
+        status.setLabel("Статус купона");
+        status.setItemLabelGenerator(TicketStatus::getName);
+        status.setItems(statusService.findAll());
 
         FormLayout formLayout = new FormLayout();
         formLayout.add(
                 customer,
                 dateOfBirth,
                 passport,
-                phone,
+                customerPhone,
                 issueDate,
                 departureDate,
                 reservationNumber,
                 ticketNumber,
-                route,
+                flightRoute,
                 price,
-                typeSelector,
-                statusSelector,
+                type,
+                status,
                 comment
 
         );
@@ -128,9 +128,9 @@ public class TicketEditor extends Dialog {
         formLayout.setColspan(customer,3);
         formLayout.setColspan(dateOfBirth, 1);
         formLayout.setColspan(passport, 2);
-        formLayout.setColspan(phone, 2);
+        formLayout.setColspan(customerPhone, 2);
 
-        formLayout.setColspan(route, 2);
+        formLayout.setColspan(flightRoute, 2);
         formLayout.setColspan(price, 2);
 
         formLayout.setColspan(comment, 2);
@@ -160,23 +160,26 @@ public class TicketEditor extends Dialog {
         close();
     }
 
-
-
     private void save() {
         ticketService.save(ticket);
         changeHandler.onChange();
-
+        Notification.show("Билет был успешно сохранен");
+        close();
     }
 
     private void delete() {
         ticketService.delete(ticket);
         changeHandler.onChange();
+        Notification.show("Выбранный билет был удален");
+        close();
     }
 
     public void editTicket(Ticket t) {
         if(t == null) {
+            close();
             return;
         }
+        open();
         if(t.getId() != null) {
             setHeaderTitle("Редактирование билета");
 

@@ -8,7 +8,6 @@ import allteran.voyage.ui.component.TicketEditor;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Div;
@@ -36,7 +35,6 @@ public class TicketsView extends Div {
 
     private Grid<Ticket> grid = new Grid<>(Ticket.class,false);
     private Button addNewButton = new Button("Добавить билет", VaadinIcon.PLUS.create());
-    private String editDialogTitle = "Default title";
 
     @Autowired
     public TicketsView(TicketEditor ticketEditor, TicketService ticketService, TicketTypeService typeService, TicketStatusService statusService) {
@@ -47,6 +45,12 @@ public class TicketsView extends Div {
         this.dataProvider = new ListDataProvider<>(ticketService.findAll());
 
         add(ticketEditor);
+
+        ticketEditor.setChangeHandler(() -> {
+            dataProvider = new ListDataProvider<>(ticketService.findAll());
+            grid.setDataProvider(dataProvider);
+        });
+
         addNewButton.getElement().setAttribute("aria-label", "Profile");
         addNewButton.getStyle().set("margin-inline-start", "auto").set("padding", "5px");
         addNewButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -57,8 +61,7 @@ public class TicketsView extends Div {
 
         createGridColumns();
         createFilter();
-        grid.asSingleSelect().addValueChangeListener(t -> ticketEditor.editTicket(t.getValue()));
-
+        grid.addItemDoubleClickListener(l -> ticketEditor.editTicket(l.getItem()));
 //        grid
 //                .asSingleSelect()
 //                .addValueChangeListener(t -> testEditor.editTicket(t.getValue()));
@@ -150,8 +153,7 @@ public class TicketsView extends Div {
 
         HorizontalLayout horizontalLayout = new HorizontalLayout(filter, button);
         horizontalLayout.setWidthFull();
-        VerticalLayout verticalLayout = new VerticalLayout(title, horizontalLayout);
-        return verticalLayout;
+        return new VerticalLayout(title, horizontalLayout);
     }
 
 }
