@@ -21,10 +21,13 @@ import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.renderer.LocalDateRenderer;
 import com.vaadin.flow.data.renderer.TemplateRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.function.SerializableComparator;
+import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Route(value = "tickets", layout = MainView.class)
+@PageTitle("Билеты | VOYAGE")
 public class TicketsView extends Div {
     private final TicketEditor ticketEditor;
     private ListDataProvider<Ticket> dataProvider;
@@ -42,19 +45,19 @@ public class TicketsView extends Div {
         this.ticketService = ticketService;
         this.typeService = typeService;
         this.statusService = statusService;
-        this.dataProvider = new ListDataProvider<>(ticketService.findAll());
+        this.dataProvider = new ListDataProvider<>(ticketService.findAllSortedByIssueDate());
 
         add(ticketEditor);
 
         ticketEditor.setChangeHandler(() -> {
-            dataProvider = new ListDataProvider<>(ticketService.findAll());
+            dataProvider = new ListDataProvider<>(ticketService.findAllSortedByIssueDate());
             grid.setDataProvider(dataProvider);
         });
 
         addNewButton.getElement().setAttribute("aria-label", "Profile");
         addNewButton.getStyle().set("margin-inline-start", "auto").set("padding", "5px");
         addNewButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        addNewButton.addClickListener(e -> ticketEditor.open());
+        addNewButton.addClickListener(e -> ticketEditor.editTicket(new Ticket()));
 
         add(createToolbar(createFilter(), addNewButton));
         add(createGridLayout());
@@ -62,14 +65,6 @@ public class TicketsView extends Div {
         createGridColumns();
         createFilter();
         grid.addItemDoubleClickListener(l -> ticketEditor.editTicket(l.getItem()));
-//        grid
-//                .asSingleSelect()
-//                .addValueChangeListener(t -> testEditor.editTicket(t.getValue()));
-
-//        testEditor.setChangeHandler(() ->{
-//            testEditor.setVisible(false);
-//        });
-
     }
 
 
@@ -88,9 +83,29 @@ public class TicketsView extends Div {
     private void createGridColumns() {
         grid.addColumn(Ticket::getCustomer).setHeader("Пассажир").setSortable(true);
         grid.addColumn(new LocalDateRenderer<>(Ticket::getIssueDate, "dd.MM.yyyy"))
-                .setHeader("Дата выписки").setSortable(true);
+                .setHeader("Дата выписки")
+                .setComparator((SerializableComparator<Ticket>) (o1, o2) -> {
+                    if(o1.getIssueDate().isAfter(o2.getIssueDate())) {
+                        return 1;
+                    } else if(o1.getIssueDate().isBefore(o2.getIssueDate())) {
+                        return -1;
+                    } else {
+                        return 0;
+                    }
+                }).setSortable(true);
         grid.addColumn(new LocalDateRenderer<>(Ticket::getDepartureDate, "dd.MM.yyyy"))
-                .setHeader("Дата вылета").setSortable(true);
+                .setHeader("Дата вылета")
+                .setComparator((SerializableComparator<Ticket>) (o1, o2) -> {
+                    if(o1.getDepartureDate().isAfter(o2.getDepartureDate())) {
+                        return 1;
+                    } else if(o1.getDepartureDate().isBefore(o2.getDepartureDate())) {
+                        return -1;
+                    } else {
+                        return 0;
+                    }
+                })
+                .setSortable(true);
+
         grid.addColumn(Ticket::getReservationNumber).setHeader("№ брони").setSortable(true);
         grid.addColumn(Ticket::getTicketNumber).setHeader("№ билета").setSortable(true);
 
@@ -104,12 +119,23 @@ public class TicketsView extends Div {
         grid.addColumn(Ticket::getPassport).setHeader("Документ");
 
         grid.addColumn(new LocalDateRenderer<>(Ticket::getDateOfBirth, "dd.MM.yyyy"))
-                .setHeader("Дата рождения").setSortable(true);
+                .setHeader("Дата рождения")
+                .setComparator((SerializableComparator<Ticket>) (o1, o2) -> {
+                    if(o1.getDateOfBirth().isAfter(o2.getDateOfBirth())) {
+                        return 1;
+                    } else if(o1.getDateOfBirth().isBefore(o2.getDateOfBirth())) {
+                        return -1;
+                    } else {
+                        return 0;
+                    }
+                })
+                .setSortable(true);
         grid.addColumn(Ticket::getCustomerPhone).setHeader("Телефон").setSortable(true);
 
         TemplateRenderer<Ticket> statusRender = TemplateRenderer.<Ticket>of("[[item.status.name]]")
                 .withProperty("status", Ticket::getStatus)        ;
         grid.addColumn(statusRender).setHeader("Статус купона").setSortable(true);
+
     }
 
     private Component createFilter() {

@@ -32,6 +32,8 @@ public class TicketService {
         return ticketRepo.findAll();
     }
 
+    public List<Ticket> findAllSortedByIssueDate() {return ticketRepo.findAllSorted();}
+
     public List<Ticket> findByCustomer(String customer) {
         return ticketRepo.findAllByCustomer(customer);
     }
