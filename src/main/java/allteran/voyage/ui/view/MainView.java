@@ -19,6 +19,9 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouterLink;
 
+import javax.annotation.security.PermitAll;
+
+@PermitAll
 @PageTitle("Voyage")
 @Route
 public class MainView extends AppLayout {

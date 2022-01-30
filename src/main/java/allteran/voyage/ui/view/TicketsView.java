@@ -26,8 +26,11 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.annotation.security.PermitAll;
+
 @Route(value = "tickets", layout = MainView.class)
 @PageTitle("Билеты | VOYAGE")
+@PermitAll
 public class TicketsView extends Div {
     private final TicketEditor ticketEditor;
     private ListDataProvider<Ticket> dataProvider;
