@@ -1,7 +1,9 @@
 package allteran.voyage.ui.view;
 
 import allteran.voyage.domain.User;
+import allteran.voyage.security.SecurityService;
 import allteran.voyage.service.UserService;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
@@ -20,7 +22,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 @PageTitle("Регистрация | VOYAGE")
 @AnonymousAllowed
 public class RegistrationView extends Div {
+    private static final String REGISTRATION_SUCCESS_URL = "/";
     private final UserService userService;
+    private final SecurityService securityService;
 
     private final TextField firstName;
     private final TextField lastName;
@@ -31,21 +35,16 @@ public class RegistrationView extends Div {
     private Binder<User> binder = new Binder<>(User.class);
 
     @Autowired
-    public RegistrationView(UserService userService) {
+    public RegistrationView(UserService userService, SecurityService securityService) {
         this.userService = userService;
+        this.securityService = securityService;
+
         getStyle()
-                .set("display", "-ms-flexbox")
-                .set("display", "-webkit-box")
-                .set("display", "flex")
-                .set("-ms-flex-align", "center")
-                .set("-ms-flex-pack", "center")
-                .set("-webkit-box-align", "center")
-                .set("-align-items", "center")
-                .set("-webkit-box-pack", "center")
-                .set("justify-content", "center")
-                .set("padding-top", "40px")
-                .set("padding-bottom", "40px")
-        ;
+                .set("display", "block")
+                .set("margin", "0 auto")
+                .set("max-width", "1024px")
+                .set("padding", "0 var(--lumo-space-l)");
+
         firstName = new TextField("Имя");
         lastName = new TextField("Фамилия");
         phone = new TextField("Номер телефона");
@@ -60,8 +59,9 @@ public class RegistrationView extends Div {
                 user.setPhone(phone.getValue());
                 user.setPassword(password.getValue());
 
-                userService.addUser(user);
-
+                if(userService.addUser(user)) {
+                    UI.getCurrent().getPage().setLocation(REGISTRATION_SUCCESS_URL);
+                }
             }
         });
 
@@ -92,8 +92,14 @@ public class RegistrationView extends Div {
         binder.forField(phone).withValidator(ph -> ph.matches("\\^?(79)\\d{9}"), "79XXXXXXXXX").bind(User::getPhone, User::setPhone);
         binder.forField(firstName).withValidator(fn -> fn.length()>0, "Поле не может быть пустым").bind(User::getFirstName, User::setFirstName);
         binder.forField(lastName).withValidator(ln -> ln.length()>0, "Поле не может быть пустым").bind(User::getLastName, User::setLastName);
-        binder.forField(password).withValidator(p -> p.length() >= 8 && p.length() <= 32, "Длинна пароля должна быть от 8 до 32 символов").bind(User::getPassword, User::setPassword);
-        binder.forField(confirmPassword).withValidator(pc -> pc.length() >= 8 && pc.length() <= 32, "Длинна пароля должна быть от 8 до 32 символов").bind(User::getPasswordConfirm, User::setPasswordConfirm);
+
+        binder.forField(password)
+                .withValidator(p -> p.length() >= 8 && p.length() <= 32, "Длинна пароля должна быть от 8 до 32 символов")
+                .withValidator(p -> p.equals(confirmPassword.getValue()), "Пароли не совпадают").bind(User::getPassword, User::setPassword);
+
+        binder.forField(confirmPassword)
+                .withValidator(pc -> pc.length() >= 8 && pc.length() <= 32, "Длинна пароля должна быть от 8 до 32 символов")
+                .withValidator(pc -> pc.equals(password.getValue()), "Пароли не совпадают").bind(User::getPasswordConfirm, User::setPasswordConfirm);
 
         add(formLayout);
     }

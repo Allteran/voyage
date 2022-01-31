@@ -3,6 +3,7 @@ package allteran.voyage.ui.view;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.login.LoginForm;
 import com.vaadin.flow.component.login.LoginI18n;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
@@ -35,6 +36,9 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         i18n.setAdditionalInformation("Нет учетной записи? Обратитесь к Вашему системному администратору");
 
         login.setI18n(i18n);
+        login.addForgotPasswordListener(e -> {
+            Notification.show("Функционал пока только в разработке. Для восстановления пароля обратитесь к своему системному администратору");
+        });
         add(new H1("VOYAGE"),login);
         // Prevent the example from stealing focus when browsing the documentation
         login.getElement().setAttribute("no-autofocus", "");

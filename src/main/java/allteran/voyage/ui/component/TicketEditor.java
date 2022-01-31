@@ -57,7 +57,7 @@ public class TicketEditor extends Dialog {
     private Select<TicketStatus> status;
 
     public interface ChangeHandler {
-        public void onChange();
+        void onChange();
     }
 
     @Autowired

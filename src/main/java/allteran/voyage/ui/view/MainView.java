@@ -1,23 +1,25 @@
 package allteran.voyage.ui.view;
 
+import allteran.voyage.domain.User;
+import allteran.voyage.security.SecurityService;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouterLink;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.security.PermitAll;
 
@@ -25,7 +27,11 @@ import javax.annotation.security.PermitAll;
 @PageTitle("Voyage")
 @Route
 public class MainView extends AppLayout {
-    public MainView() {
+    private static final String PROFILE_PAGE = "/profile";
+    private final SecurityService securityService;
+
+    public MainView(@Autowired SecurityService securityService) {
+        this.securityService = securityService;
         DrawerToggle drawerToggle = new DrawerToggle();
 
         H1 title = new H1("Voyage");
@@ -53,10 +59,16 @@ public class MainView extends AppLayout {
         HorizontalLayout buttonsGroup = new HorizontalLayout();
         buttonsGroup.getStyle().set("margin-inline-start", "auto");
 
-        Button profile = new Button("User profile");
+        User user = (User) securityService.getAuthenticatedUser();
+        String userName = "profile";
+        if(user != null) {
+            userName =  user.getFirstName() + " " + user.getLastName();
+        }
+        Button profile = new Button(userName);
         profile.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         profile.getElement().setAttribute("aria-label", "Profile");
         profile.getStyle().set("margin-inline-start", "auto");
+        profile.addClickListener(e ->UI.getCurrent().getPage().setLocation(PROFILE_PAGE));
         buttonsGroup.add(profile);
 
 
@@ -64,6 +76,7 @@ public class MainView extends AppLayout {
         logout.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_TERTIARY);
         logout.getElement().setAttribute("aria-label", "Logout");
         logout.getStyle().set("margin-inline-start", "auto");
+        logout.addClickListener(e -> securityService.logout());
         buttonsGroup.add(logout);
 
         layout.add(buttonsGroup);
@@ -73,11 +86,13 @@ public class MainView extends AppLayout {
 
     private Tabs getTabs() {
         Tabs tabs = new Tabs();
-        tabs.add(
-                createTab(VaadinIcon.LIST, "Список билетов", TicketsView.class),
-                createTab(VaadinIcon.ARCHIVE, "Отчеты", TicketsView.class),
-                createTab(VaadinIcon.CHART, "Аналитика", TicketsView.class)
-        );
+
+        Tab ticketsTab = createTab(VaadinIcon.LIST, "Список билетов", TicketsView.class);
+        Tab archiveTab = createTab(VaadinIcon.ARCHIVE, "Отчеты", TicketsView.class);
+        Tab analyticTab = createTab(VaadinIcon.CHART, "Аналитика", TicketsView.class);
+
+        tabs.add(ticketsTab, archiveTab, analyticTab);
+        tabs.setSelectedTab(ticketsTab);
         tabs.setOrientation(Tabs.Orientation.VERTICAL);
         return tabs;
 
