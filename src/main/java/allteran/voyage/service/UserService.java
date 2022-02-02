@@ -2,7 +2,9 @@ package allteran.voyage.service;
 
 import allteran.voyage.domain.Role;
 import allteran.voyage.domain.User;
+import allteran.voyage.exception.IncorrectPasswordException;
 import allteran.voyage.repo.UserRepo;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -50,4 +52,26 @@ public class UserService implements UserDetailsService {
     public User findByPhone(String phone) {
         return userRepo.findByPhone(phone);
     }
+
+    public User findById(Long id) {
+        return userRepo.findById(id).get();
+    }
+
+    public boolean isPasswordsMatches(String enteredPassword, String correctPassword) {
+        return passwordEncoder.matches(enteredPassword, correctPassword);
+    }
+
+    public User updateUser(User userFromDb, User user){
+        boolean isPasswordsMatches = isPasswordsMatches(user.getPassword(), userFromDb.getPassword());
+        if(user.getPassword() != null){
+            if(isPasswordsMatches) {
+                userFromDb.setPassword(passwordEncoder.encode(user.getPassword()));
+            } else {
+                throw new IncorrectPasswordException("Текущий введен неверно");
+            }
+        }
+        BeanUtils.copyProperties(user, userFromDb, "id", "password", "passwordConfirm");
+        return userRepo.save(userFromDb);
+    }
+
 }

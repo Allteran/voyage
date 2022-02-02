@@ -1,7 +1,9 @@
 package allteran.voyage.ui.view;
 
 import allteran.voyage.domain.User;
+import allteran.voyage.exception.IncorrectPasswordException;
 import allteran.voyage.security.SecurityService;
+import allteran.voyage.service.UserService;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -29,6 +31,7 @@ import javax.annotation.security.PermitAll;
 public class ProfileView extends Div {
     private static final String AFTER_EDIT_REDIRECT_URL = "/tickets";
     private final SecurityService securityService;
+    private final UserService userService;
 
     private Binder<User> binder = new Binder<>(User.class);
 
@@ -42,10 +45,14 @@ public class ProfileView extends Div {
 
     private Dialog changePasswordDialog;
 
+    private User currentUser;
+
     @Autowired
-    public ProfileView(SecurityService securityService) {
+    public ProfileView(SecurityService securityService, UserService userService) {
         this.securityService = securityService;
+        this.userService = userService;
         changePasswordDialog = createChangePasswordDialog();
+        currentUser = (User) securityService.getAuthenticatedUser();
 
         getStyle()
                 .set("display", "block")
@@ -133,23 +140,53 @@ public class ProfileView extends Div {
 
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        save.addClickListener(e -> savePassword(current.getValue(), newPassword.getValue(), newPasswordConfirm.getValue()));
-        cancel.addClickListener(e -> dialog.close());
+        save.addClickListener(e -> {
+                    User fromDb = userService.findById(currentUser.getId());
+
+                    if(!newPassword.getValue().equals(newPasswordConfirm.getValue())) {
+                        newPassword.setErrorMessage("Пароли должны совпадать");
+                        newPasswordConfirm.setErrorMessage("Пароли должны совпадать");
+                        newPassword.setInvalid(true);
+                        newPasswordConfirm.setInvalid(true);
+                        return;
+                    }
+                    if(userService.isPasswordsMatches(current.getValue(), fromDb.getPassword())) {
+                        currentUser.setPassword(newPassword.getValue());
+                        userService.updateUser(fromDb, currentUser);
+                        Notification.show("Пароль был изменен успешно");
+                        clearPasswordForm(current, newPassword, newPasswordConfirm);
+                        dialog.close();
+                    } else {
+                        current.setErrorMessage("Текущий пароль введен неверно");
+                        current.setInvalid(true);
+                    }
+                }
+        );
+        cancel.addClickListener(e -> {
+            clearPasswordForm(current, newPassword, newPasswordConfirm);
+            dialog.close();
+        });
 
         HorizontalLayout buttonLayout = new HorizontalLayout(save, cancel);
         buttonLayout.getStyle().set("flex-wrap", "wrap");
         buttonLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
 
-        current.addValueChangeListener(event -> {
-            //TODO: custom validation
+        newPasswordConfirm.addValueChangeListener(e -> {
+            if(!e.getValue().equals(newPassword.getValue())) {
+                newPassword.setErrorMessage("Пароли должны совпадать");
+                newPasswordConfirm.setErrorMessage("Пароли должны совпадать");
+                newPassword.setInvalid(true);
+            }
         });
 
         dialog.add(new Div(headline, dialogForm, buttonLayout));
         return dialog;
     }
 
-    private void savePassword(String currentPassword, String newPassword, String newPasswordConfirm) {
-
+    private void clearPasswordForm(PasswordField currentPassword, PasswordField newPassword, PasswordField passwordConfirm ) {
+        currentPassword.clear();
+        newPassword.clear();
+        passwordConfirm.clear();
     }
 
 }
