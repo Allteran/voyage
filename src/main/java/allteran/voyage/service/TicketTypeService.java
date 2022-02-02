@@ -19,4 +19,16 @@ public class TicketTypeService {
     public List<TicketType> findAll() {
         return typeRepo.findAll();
     }
+
+    public TicketType save(TicketType type) {
+        return typeRepo.save(type);
+    }
+
+    public void delete(TicketType type) {
+        typeRepo.delete(type);
+    }
+
+    public TicketType findById(Long id, TicketType newType) {
+        return typeRepo.findById(id).orElse(newType);
+    }
 }

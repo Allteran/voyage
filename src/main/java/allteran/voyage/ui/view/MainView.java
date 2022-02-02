@@ -1,7 +1,9 @@
 package allteran.voyage.ui.view;
 
+import allteran.voyage.domain.Role;
 import allteran.voyage.domain.User;
 import allteran.voyage.security.SecurityService;
+import allteran.voyage.ui.view.admin.TypeListView;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
@@ -29,9 +31,12 @@ import javax.annotation.security.PermitAll;
 public class MainView extends AppLayout {
     private static final String PROFILE_PAGE = "/profile";
     private final SecurityService securityService;
+    private User user;
 
     public MainView(@Autowired SecurityService securityService) {
         this.securityService = securityService;
+        user = (User) securityService.getAuthenticatedUser();
+
         DrawerToggle drawerToggle = new DrawerToggle();
 
         H1 title = new H1("Voyage");
@@ -87,12 +92,17 @@ public class MainView extends AppLayout {
     private Tabs getTabs() {
         Tabs tabs = new Tabs();
 
-        Tab ticketsTab = createTab(VaadinIcon.LIST, "Список билетов", TicketsView.class);
-        Tab archiveTab = createTab(VaadinIcon.ARCHIVE, "Отчеты", TicketsView.class);
-        Tab analyticTab = createTab(VaadinIcon.CHART, "Аналитика", TicketsView.class);
+        tabs.add(createTab(VaadinIcon.AIRPLANE, "Список билетов", TicketsView.class));
+        tabs.add(createTab(VaadinIcon.ARCHIVE, "Отчеты", TicketsView.class));
+        tabs.add(createTab(VaadinIcon.CHART, "Аналитика", TicketsView.class));
 
-        tabs.add(ticketsTab, archiveTab, analyticTab);
-        tabs.setSelectedTab(ticketsTab);
+        // Now display items that available only for admin
+        for (Role r : user.getRoles()) {
+            if(r.equals(Role.ADMIN)) {
+                tabs.add(createTab(VaadinIcon.AUTOMATION, "Типы билетов" ,TypeListView.class));
+            }
+        }
+
         tabs.setOrientation(Tabs.Orientation.VERTICAL);
         return tabs;
 
