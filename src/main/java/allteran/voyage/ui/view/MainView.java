@@ -25,9 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.security.PermitAll;
 
-@PermitAll
-@PageTitle("Voyage")
-@Route
 public class MainView extends AppLayout {
     private static final String PROFILE_PAGE = "/profile";
     private final SecurityService securityService;
@@ -36,7 +33,6 @@ public class MainView extends AppLayout {
     public MainView(@Autowired SecurityService securityService) {
         this.securityService = securityService;
         user = (User) securityService.getAuthenticatedUser();
-
         DrawerToggle drawerToggle = new DrawerToggle();
 
         H1 title = new H1("Voyage");

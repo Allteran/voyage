@@ -18,10 +18,11 @@ import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
+
+import javax.annotation.security.RolesAllowed;
 
 @Route(value = "adm/ticket-type", layout = MainView.class)
-@PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+@RolesAllowed("ADMIN")
 @PageTitle("Типы билетов | Администрирование VOYAGE")
 public class TypeListView extends Div {
     private final TicketTypeService typeService;

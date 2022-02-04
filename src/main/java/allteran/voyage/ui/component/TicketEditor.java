@@ -1,11 +1,7 @@
 package allteran.voyage.ui.component;
 
-import allteran.voyage.domain.Ticket;
-import allteran.voyage.domain.TicketStatus;
-import allteran.voyage.domain.TicketType;
-import allteran.voyage.service.TicketService;
-import allteran.voyage.service.TicketStatusService;
-import allteran.voyage.service.TicketTypeService;
+import allteran.voyage.domain.*;
+import allteran.voyage.service.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
@@ -17,23 +13,28 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
-import com.vaadin.flow.data.converter.StringToIntegerConverter;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import com.vaadin.flow.spring.annotation.UIScope;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Objects;
+
 @SpringComponent
 @UIScope
 public class TicketEditor extends Dialog {
+    private static final String ERROR_NOT_BLANK = "Поле не может быть пустым";
+
     private final TicketService ticketService;
     private final TicketTypeService typeService;
     private final TicketStatusService statusService;
+    private final PayTypeService payTypeService;
+    private final POSService posService;
 
     private Ticket ticket;
-
     private Binder<Ticket> binder = new Binder<>(Ticket.class);
 
     @Setter
@@ -47,28 +48,39 @@ public class TicketEditor extends Dialog {
     private TextField reservationNumber;
     private TextField ticketNumber;
     private TextField flightRoute;
-    private TextField price;
+    private NumberField tariffPrice;
+    private NumberField taxYQPrice;
+    private NumberField taxRUYRPrice;
+    private NumberField totalPrice;
+
     private TextField comment;
+
     private DatePicker issueDate;
     private DatePicker departureDate;
     private DatePicker dateOfBirth;
+
     private Select<TicketType> type;
     private Select<TicketStatus> status;
+    private Select<PayType> payType;
+    private Select<PointOfSales> pos;
 
     public interface ChangeHandler {
         void onChange();
     }
 
     @Autowired
-    public TicketEditor(TicketService ticketService, TicketTypeService typeService, TicketStatusService statusService) {
+    public TicketEditor(TicketService ticketService, TicketTypeService typeService, TicketStatusService statusService, PayTypeService payTypeService, POSService posService) {
         this.ticketService = ticketService;
         this.typeService = typeService;
         this.statusService = statusService;
+        this.payTypeService = payTypeService;
+        this.posService = posService;
         createDialogLayout();
 
-        binder.forField(price)
-                .withConverter(new StringToIntegerConverter(0, "Необходимо ввести число"))
-                .bind("price");
+        binder.forField(tariffPrice).withValidator(Objects::nonNull, "Необходимо ввести число").bind(Ticket::getTariffPrice, Ticket::setTariffPrice);
+        binder.forField(taxYQPrice).withValidator(Objects::nonNull, "Необходимо ввести число").bind(Ticket::getTaxYQPrice, Ticket::setTaxYQPrice);
+        binder.forField(taxRUYRPrice).withValidator(Objects::nonNull, "Необходимо ввести число").bind(Ticket::getTaxRUYRPrice, Ticket::setTaxRUYRPrice);
+
         binder.bindInstanceFields(this);
 
         setMaxWidth("66%");
@@ -88,12 +100,33 @@ public class TicketEditor extends Dialog {
         reservationNumber = new TextField("Номер брони");
         ticketNumber = new TextField("Номер билета");
         flightRoute = new TextField("Полетный маршрут");
-        price = new TextField("Цена");
         comment = new TextField("Комментарий");
+
+        customer.setErrorMessage(ERROR_NOT_BLANK);
+        customerPhone.setErrorMessage("79XXXXXXXXX");
+        passport.setErrorMessage(ERROR_NOT_BLANK);
+        reservationNumber.setErrorMessage(ERROR_NOT_BLANK);
+        ticketNumber.setErrorMessage(ERROR_NOT_BLANK);
+        flightRoute.setErrorMessage(ERROR_NOT_BLANK);
+        comment.setErrorMessage(ERROR_NOT_BLANK);
+
+        tariffPrice = new NumberField("Цена тарифа");
+        taxYQPrice = new NumberField("Такса YQ");
+        taxRUYRPrice = new NumberField("Такса RU/YR");
+        totalPrice = new NumberField("Итоговая цена");
+        totalPrice.setReadOnly(true);
+
+        tariffPrice.addValueChangeListener(e -> calculateTotalPrice());
+        taxYQPrice.addValueChangeListener(e -> calculateTotalPrice());
+        taxRUYRPrice.addValueChangeListener(e -> calculateTotalPrice());
 
         issueDate = new DatePicker("Дата выписки");
         departureDate = new DatePicker("Дата вылета");
         dateOfBirth = new DatePicker("Дата рождения");
+
+        issueDate.setErrorMessage(ERROR_NOT_BLANK);
+        departureDate.setErrorMessage(ERROR_NOT_BLANK);
+        dateOfBirth.setErrorMessage(ERROR_NOT_BLANK);
 
         type = new Select<>();
         type.setLabel("Тип выписки");
@@ -105,21 +138,29 @@ public class TicketEditor extends Dialog {
         status.setItemLabelGenerator(TicketStatus::getName);
         status.setItems(statusService.findAll());
 
+        payType = new Select<>();
+        payType.setLabel("Тип оплаты");
+        payType.setItemLabelGenerator(PayType::getName);
+        payType.setItems(payTypeService.findAll());
+
+        pos = new Select<>();
+        pos.setLabel("Точка продаж");
+        pos.setItemLabelGenerator(PointOfSales::getNickname);
+        pos.setItems(posService.findAll());
+        pos.setReadOnly(true);
+
+        type.setErrorMessage(ERROR_NOT_BLANK);
+        status.setErrorMessage(ERROR_NOT_BLANK);
+        payType.setErrorMessage(ERROR_NOT_BLANK);
+
         FormLayout formLayout = new FormLayout();
         formLayout.add(
-                customer,
-                dateOfBirth,
-                passport,
-                customerPhone,
-                issueDate,
-                departureDate,
-                reservationNumber,
-                ticketNumber,
-                flightRoute,
-                price,
-                type,
-                status,
-                comment
+                customer,dateOfBirth,
+                passport,customerPhone,
+                issueDate,departureDate,reservationNumber,ticketNumber,
+                flightRoute,type, status,
+                tariffPrice, taxYQPrice, taxRUYRPrice, totalPrice,
+                payType, pos, comment
 
         );
 
@@ -131,7 +172,6 @@ public class TicketEditor extends Dialog {
         formLayout.setColspan(customerPhone, 2);
 
         formLayout.setColspan(flightRoute, 2);
-        formLayout.setColspan(price, 2);
 
         formLayout.setColspan(comment, 2);
 
@@ -156,15 +196,31 @@ public class TicketEditor extends Dialog {
         add(dialogLayout);
     }
 
+    private void calculateTotalPrice() {
+        double tp = 0;
+        if(tariffPrice.getValue() != null) {
+            tp = tp + tariffPrice.getValue();
+        }
+        if(taxYQPrice.getValue() != null) {
+            tp = tp + taxYQPrice.getValue();
+        }
+        if(taxRUYRPrice.getValue() != null) {
+            tp = tp + taxRUYRPrice.getValue();
+        }
+        totalPrice.setValue(tp);
+    }
+
     private void discardChanges() {
         close();
     }
 
     private void save() {
-        ticketService.save(ticket);
-        changeHandler.onChange();
-        Notification.show("Билет был успешно сохранен");
-        close();
+        if(validate()) {
+            ticketService.save(ticket);
+            changeHandler.onChange();
+            Notification.show("Билет был успешно сохранен");
+            close();
+        }
     }
 
     private void delete() {
@@ -189,6 +245,30 @@ public class TicketEditor extends Dialog {
         }
 
         binder.setBean(ticket);
+    }
+
+    private boolean validate() {
+        customer.setInvalid(customer.isEmpty());
+        customerPhone.setInvalid(!customerPhone.getValue().matches("\\^?(79)\\d{9}"));
+        passport.setInvalid(passport.isEmpty());
+        reservationNumber.setInvalid(reservationNumber.isEmpty());
+        ticketNumber.setInvalid(ticketNumber.isEmpty());
+        flightRoute.setInvalid(flightRoute.isEmpty());
+        comment.setInvalid(comment.isEmpty());
+
+        issueDate.setInvalid(issueDate.isEmpty());
+        departureDate.setInvalid(departureDate.isEmpty());
+        dateOfBirth.setInvalid(dateOfBirth.isEmpty());
+
+        type.setInvalid(type.isEmpty());
+        status.setInvalid(status.isEmpty());
+        payType.setInvalid(payType.isEmpty());
+
+        boolean invalid =  customer.isEmpty() || !customerPhone.getValue().matches("\\^?(79)\\d{9}") || passport.isEmpty() ||
+                reservationNumber.isEmpty() || ticketNumber.isEmpty() || flightRoute.isEmpty() || comment.isEmpty() ||
+                issueDate.isEmpty() || departureDate.isEmpty() || dateOfBirth.isEmpty() || type.isEmpty() || status.isEmpty() || payType.isEmpty();
+
+        return !invalid;
     }
 
 

@@ -93,6 +93,12 @@ public class TicketTypeEditor extends Dialog {
     }
 
     private void delete() {
+        if(type.getId() == null) {
+            name.clear();
+            Notification.show("Нечего удалять :)");
+            close();
+            return;
+        }
         typeService.delete(type);
         changeHandler.onChange();
         Notification.show("Выбраный тип был удален");
@@ -106,7 +112,12 @@ public class TicketTypeEditor extends Dialog {
             return;
         }
         open();
-        this.type = typeService.findById(t.getId(), t);
+        if(t.getId() != null) {
+            this.type = typeService.findById(t.getId(), t);
+        } else {
+            this.type = t;
+        }
+
         binder.setBean(type);
     }
 }

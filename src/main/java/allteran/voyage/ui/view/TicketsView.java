@@ -28,7 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.security.PermitAll;
 
-@Route(value = "tickets", layout = MainView.class)
+@Route(value = "", layout = MainView.class)
 @PageTitle("Билеты | VOYAGE")
 @PermitAll
 public class TicketsView extends Div {
@@ -113,7 +113,7 @@ public class TicketsView extends Div {
         grid.addColumn(Ticket::getTicketNumber).setHeader("№ билета").setSortable(true);
 
         grid.addColumn(Ticket::getFlightRoute).setHeader("Маршрут").setSortable(true);
-        grid.addColumn(Ticket::getPrice).setHeader("Цена").setSortable(true);
+        grid.addColumn(Ticket::getTotalPrice).setHeader("Цена").setSortable(true);
 
         TemplateRenderer<Ticket> typeRenderer = TemplateRenderer.<Ticket>of("[[item.type.name]]")
                 .withProperty("type", Ticket::getType);

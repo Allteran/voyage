@@ -4,7 +4,6 @@ import lombok.Data;
 
 import javax.persistence.*;
 import java.time.LocalDate;
-import java.util.Date;
 
 @Entity
 @Data
@@ -22,7 +21,19 @@ public class Ticket {
     private String customer; //*
     private String flightRoute;//*
 
-    private int price;//*
+    private double tariffPrice;//*
+    private double taxYQPrice;//*
+    private double taxRUYRPrice;//*
+
+    private double totalPrice;//*
+
+    @ManyToOne
+    @JoinColumn(name = "pay_type_id")
+    private PayType payType; //*
+
+    @ManyToOne
+    @JoinColumn(name = "pos_id")
+    private PointOfSales pos;
 
     @ManyToOne
     @JoinColumn(name = "type_id")
@@ -36,6 +47,10 @@ public class Ticket {
     @ManyToOne
     @JoinColumn(name = "status_id")
     private TicketStatus status;
+
+    @ManyToOne
+    @JoinColumn(name = "author_id")
+    private User author;
 
     private String comment;//*
 }
