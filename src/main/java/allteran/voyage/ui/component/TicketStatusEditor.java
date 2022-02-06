@@ -1,7 +1,8 @@
 package allteran.voyage.ui.component;
 
+import allteran.voyage.domain.TicketStatus;
 import allteran.voyage.domain.TicketType;
-import allteran.voyage.service.TicketTypeService;
+import allteran.voyage.service.TicketStatusService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -20,11 +21,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @SpringComponent
 @UIScope
-public class TicketTypeEditor extends Dialog {
-    private final TicketTypeService typeService;
-    private TicketType type;
+public class TicketStatusEditor extends Dialog {
+    private final TicketStatusService statusService;
+    private TicketStatus status;
 
-    private Binder<TicketType> binder = new Binder<>(TicketType.class);
+    private Binder<TicketStatus> binder = new Binder<>(TicketStatus.class);
 
     private TextField name;
 
@@ -36,8 +37,8 @@ public class TicketTypeEditor extends Dialog {
     }
 
     @Autowired
-    public TicketTypeEditor(TicketTypeService typeService) {
-        this.typeService = typeService;
+    public TicketStatusEditor(TicketStatusService statusService) {
+        this.statusService = statusService;
         createDialog();
 
         binder.bindInstanceFields(this);
@@ -48,7 +49,7 @@ public class TicketTypeEditor extends Dialog {
     }
 
     private void createDialog() {
-        H2  headline = new H2("Тип билета");
+        H2 headline = new H2("Тип билета");
         headline.getStyle().set("margin", "var(--lumo-space-m) 0 0 0")
                 .set("font-size", "1.5em").set("font-weight", "bold");
         name = new TextField("Наименование");
@@ -62,7 +63,7 @@ public class TicketTypeEditor extends Dialog {
         Button cancelButton = new Button("Отмена");
         cancelButton.addClickListener( e-> discardChanges());
 
-        Button deleteButton = new Button("Удалить");
+        com.vaadin.flow.component.button.Button deleteButton = new Button("Удалить");
         deleteButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
         deleteButton.getStyle().set("margin-inline-end", "auto");
         deleteButton.addClickListener( e -> delete());
@@ -76,16 +77,18 @@ public class TicketTypeEditor extends Dialog {
         add(dialogLayout);
     }
 
-    private void save() {
-        if(!name.isEmpty()) {
-            typeService.save(type);
-            changeHandler.onChange();
-            Notification.show("Тип билета был успешно сохранен");
+    private void delete() {
+        if(status.getId() == null) {
+            name.clear();
+            Notification.show("Нечего удалять :)");
             close();
-        } else {
-            name.setErrorMessage("Поле не может быть пустым");
-            name.setInvalid(true);
+            return;
         }
+        statusService.delete(status);
+        changeHandler.onChange();
+        Notification.show("Выбраный статус был удален");
+        name.clear();
+        close();
     }
 
     private void discardChanges() {
@@ -93,32 +96,31 @@ public class TicketTypeEditor extends Dialog {
         close();
     }
 
-    private void delete() {
-        if(type.getId() == null) {
-            name.clear();
-            Notification.show("Нечего удалять :)");
+    private void save() {
+        if(!name.isEmpty()) {
+            statusService.save(status);
+            changeHandler.onChange();
+            Notification.show("Статус билета был успешно сохранен");
             close();
-            return;
+        } else {
+            name.setErrorMessage("Поле не может быть пустым");
+            name.setInvalid(true);
         }
-        typeService.delete(type);
-        changeHandler.onChange();
-        Notification.show("Выбраный тип был удален");
-        name.clear();
-        close();
     }
 
-    public void editType(TicketType t) {
-        if(t == null) {
+    public void editStatus(TicketStatus s) {
+        if(s == null) {
             close();
             return;
         }
         open();
-        if(t.getId() != null) {
-            this.type = typeService.findById(t.getId(), t);
+        if(s.getId() != null) {
+            this.status = statusService.findById(s.getId(), s);
         } else {
-            this.type = t;
+            this.status = s;
         }
 
-        binder.setBean(type);
+        binder.setBean(status);
     }
+
 }

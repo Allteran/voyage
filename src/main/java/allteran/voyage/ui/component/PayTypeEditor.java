@@ -1,7 +1,7 @@
 package allteran.voyage.ui.component;
 
-import allteran.voyage.domain.TicketType;
-import allteran.voyage.service.TicketTypeService;
+import allteran.voyage.domain.PayType;
+import allteran.voyage.service.PayTypeService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -20,11 +20,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @SpringComponent
 @UIScope
-public class TicketTypeEditor extends Dialog {
-    private final TicketTypeService typeService;
-    private TicketType type;
+public class PayTypeEditor extends Dialog {
+    private final PayTypeService payTypeService;
+    private PayType payType;
 
-    private Binder<TicketType> binder = new Binder<>(TicketType.class);
+    private Binder<PayType> binder = new Binder<>(PayType.class);
 
     private TextField name;
 
@@ -36,8 +36,8 @@ public class TicketTypeEditor extends Dialog {
     }
 
     @Autowired
-    public TicketTypeEditor(TicketTypeService typeService) {
-        this.typeService = typeService;
+    public PayTypeEditor(PayTypeService payTypeService) {
+        this.payTypeService = payTypeService;
         createDialog();
 
         binder.bindInstanceFields(this);
@@ -48,7 +48,7 @@ public class TicketTypeEditor extends Dialog {
     }
 
     private void createDialog() {
-        H2  headline = new H2("Тип билета");
+        H2 headline = new H2("Тип оплаты");
         headline.getStyle().set("margin", "var(--lumo-space-m) 0 0 0")
                 .set("font-size", "1.5em").set("font-weight", "bold");
         name = new TextField("Наименование");
@@ -62,7 +62,7 @@ public class TicketTypeEditor extends Dialog {
         Button cancelButton = new Button("Отмена");
         cancelButton.addClickListener( e-> discardChanges());
 
-        Button deleteButton = new Button("Удалить");
+        com.vaadin.flow.component.button.Button deleteButton = new Button("Удалить");
         deleteButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
         deleteButton.getStyle().set("margin-inline-end", "auto");
         deleteButton.addClickListener( e -> delete());
@@ -76,16 +76,18 @@ public class TicketTypeEditor extends Dialog {
         add(dialogLayout);
     }
 
-    private void save() {
-        if(!name.isEmpty()) {
-            typeService.save(type);
-            changeHandler.onChange();
-            Notification.show("Тип билета был успешно сохранен");
+    private void delete() {
+        if(payType.getId() == null) {
+            name.clear();
+            Notification.show("Нечего удалять :)");
             close();
-        } else {
-            name.setErrorMessage("Поле не может быть пустым");
-            name.setInvalid(true);
+            return;
         }
+        payTypeService.delete(payType);
+        changeHandler.onChange();
+        Notification.show("Выбраный тип оплаты был удален");
+        name.clear();
+        close();
     }
 
     private void discardChanges() {
@@ -93,32 +95,30 @@ public class TicketTypeEditor extends Dialog {
         close();
     }
 
-    private void delete() {
-        if(type.getId() == null) {
-            name.clear();
-            Notification.show("Нечего удалять :)");
+    private void save() {
+        if(!name.isEmpty()) {
+            payTypeService.save(payType);
+            changeHandler.onChange();
+            Notification.show("Статус билета был успешно сохранен");
             close();
-            return;
+        } else {
+            name.setErrorMessage("Поле не может быть пустым");
+            name.setInvalid(true);
         }
-        typeService.delete(type);
-        changeHandler.onChange();
-        Notification.show("Выбраный тип был удален");
-        name.clear();
-        close();
     }
 
-    public void editType(TicketType t) {
-        if(t == null) {
+    public void editPayType(PayType p) {
+        if(p == null) {
             close();
             return;
         }
         open();
-        if(t.getId() != null) {
-            this.type = typeService.findById(t.getId(), t);
+        if(p.getId() != null) {
+            this.payType = payTypeService.findById(p.getId(), p);
         } else {
-            this.type = t;
+            this.payType = p;
         }
 
-        binder.setBean(type);
+        binder.setBean(payType);
     }
 }

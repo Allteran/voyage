@@ -19,4 +19,16 @@ public class POSService {
     public List<PointOfSales> findAll() {
         return posRepo.findAll();
     }
+
+    public PointOfSales save(PointOfSales pos) {
+        return posRepo.save(pos);
+    }
+
+    public void delete(PointOfSales pos) {
+        posRepo.delete(pos);
+    }
+
+    public PointOfSales findById(Long id, PointOfSales p) {
+        return posRepo.findById(id).orElse(p);
+    }
 }

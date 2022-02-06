@@ -1,8 +1,13 @@
 package allteran.voyage.ui.view;
 
+import allteran.voyage.domain.PointOfSales;
 import allteran.voyage.domain.Role;
 import allteran.voyage.domain.User;
 import allteran.voyage.security.SecurityService;
+import allteran.voyage.service.POSService;
+import allteran.voyage.ui.view.admin.POSListView;
+import allteran.voyage.ui.view.admin.PayTypeListView;
+import allteran.voyage.ui.view.admin.StatusListView;
 import allteran.voyage.ui.view.admin.TypeListView;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
@@ -18,21 +23,30 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouterLink;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.annotation.security.PermitAll;
+import java.util.prefs.Preferences;
 
 public class MainView extends AppLayout {
     private static final String PROFILE_PAGE = "/profile";
+    private static final long ID_DEFAULT_POS = 0;
+
     private final SecurityService securityService;
+    private final POSService posService;
     private User user;
 
-    public MainView(@Autowired SecurityService securityService) {
+    public MainView(@Autowired SecurityService securityService, POSService posService) {
         this.securityService = securityService;
+        this.posService = posService;
         user = (User) securityService.getAuthenticatedUser();
+
+        Preferences preferences = Preferences.userRoot();
+        if (!preferences.isUserNode()) {
+            UI.getCurrent().getPage().setLocation("/pos-select");
+            return;
+        }
+
         DrawerToggle drawerToggle = new DrawerToggle();
 
         H1 title = new H1("Voyage");
@@ -60,7 +74,19 @@ public class MainView extends AppLayout {
         HorizontalLayout buttonsGroup = new HorizontalLayout();
         buttonsGroup.getStyle().set("margin-inline-start", "auto");
 
-        User user = (User) securityService.getAuthenticatedUser();
+        Preferences userPref = Preferences.userRoot();
+        PointOfSales pos = posService.findById(userPref.getLong("pos", ID_DEFAULT_POS), new PointOfSales());
+
+        String posName = "ТТ: ";
+        if(pos.getId() != null || pos.getId() != 0) {
+            posName = posName + pos.getNickname();
+        }
+        Button posButton = new Button(posName);
+        posButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        posButton.getElement().setAttribute("aria-label", "Profile");
+        posButton.getStyle().set("margin-inline-start", "auto");
+        buttonsGroup.add(posButton);
+
         String userName = "profile";
         if(user != null) {
             userName =  user.getFirstName() + " " + user.getLastName();
@@ -95,7 +121,10 @@ public class MainView extends AppLayout {
         // Now display items that available only for admin
         for (Role r : user.getRoles()) {
             if(r.equals(Role.ADMIN)) {
+                tabs.add(createTab(VaadinIcon.MAP_MARKER, "Точки продаж", POSListView.class));
+                tabs.add(createTab(VaadinIcon.MONEY, "Типы оплаты", PayTypeListView.class));
                 tabs.add(createTab(VaadinIcon.AUTOMATION, "Типы билетов" ,TypeListView.class));
+                tabs.add(createTab(VaadinIcon.COGS, "Статусы билетов", StatusListView.class));
             }
         }
 

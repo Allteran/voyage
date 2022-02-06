@@ -1,6 +1,7 @@
 package allteran.voyage.ui.component;
 
 import allteran.voyage.domain.*;
+import allteran.voyage.security.SecurityService;
 import allteran.voyage.service.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -9,6 +10,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -22,10 +24,12 @@ import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Objects;
+import java.util.prefs.Preferences;
 
 @SpringComponent
 @UIScope
 public class TicketEditor extends Dialog {
+    private static final long ID_DEFAULT_POS = 0;
     private static final String ERROR_NOT_BLANK = "Поле не может быть пустым";
 
     private final TicketService ticketService;
@@ -33,6 +37,7 @@ public class TicketEditor extends Dialog {
     private final TicketStatusService statusService;
     private final PayTypeService payTypeService;
     private final POSService posService;
+    private final SecurityService securityService;
 
     private Ticket ticket;
     private Binder<Ticket> binder = new Binder<>(Ticket.class);
@@ -62,19 +67,25 @@ public class TicketEditor extends Dialog {
     private Select<TicketType> type;
     private Select<TicketStatus> status;
     private Select<PayType> payType;
-    private Select<PointOfSales> pos;
+    private TextField pointOfSales;
+
+    private H3 authorTitle;
+
+    private User currentUser;
 
     public interface ChangeHandler {
         void onChange();
     }
 
     @Autowired
-    public TicketEditor(TicketService ticketService, TicketTypeService typeService, TicketStatusService statusService, PayTypeService payTypeService, POSService posService) {
+    public TicketEditor(TicketService ticketService, TicketTypeService typeService, TicketStatusService statusService, PayTypeService payTypeService, POSService posService, SecurityService securityService) {
         this.ticketService = ticketService;
         this.typeService = typeService;
         this.statusService = statusService;
         this.payTypeService = payTypeService;
         this.posService = posService;
+        this.securityService = securityService;
+
         createDialogLayout();
 
         binder.forField(tariffPrice).withValidator(Objects::nonNull, "Необходимо ввести число").bind(Ticket::getTariffPrice, Ticket::setTariffPrice);
@@ -91,8 +102,15 @@ public class TicketEditor extends Dialog {
 
     private void createDialogLayout() {
         H2 headline = new H2(headerTitle);
-        headline.getStyle().set("margin", "var(--lumo-space-m) 0 0 0")
-                .set("font-size", "1.5em").set("font-weight", "bold");
+        headline.getStyle().set("font-size", "1.5em").set("font-weight", "bold");
+
+        currentUser = (User) securityService.getAuthenticatedUser();
+
+        authorTitle = new H3();
+        authorTitle.getStyle().set("font-size", "1.5em").set("font-weight", "bold");
+
+        HorizontalLayout titleBar = new HorizontalLayout(headline, authorTitle);
+        titleBar.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
         customer = new TextField("ФИО Пассажира");
         customerPhone = new TextField("Контактный телефон");
@@ -101,6 +119,9 @@ public class TicketEditor extends Dialog {
         ticketNumber = new TextField("Номер билета");
         flightRoute = new TextField("Полетный маршрут");
         comment = new TextField("Комментарий");
+
+        pointOfSales = new TextField("Точка продаж");
+        pointOfSales.setReadOnly(true);
 
         customer.setErrorMessage(ERROR_NOT_BLANK);
         customerPhone.setErrorMessage("79XXXXXXXXX");
@@ -137,17 +158,13 @@ public class TicketEditor extends Dialog {
         status.setLabel("Статус купона");
         status.setItemLabelGenerator(TicketStatus::getName);
         status.setItems(statusService.findAll());
+        status.setEmptySelectionAllowed(false);
 
         payType = new Select<>();
         payType.setLabel("Тип оплаты");
         payType.setItemLabelGenerator(PayType::getName);
         payType.setItems(payTypeService.findAll());
-
-        pos = new Select<>();
-        pos.setLabel("Точка продаж");
-        pos.setItemLabelGenerator(PointOfSales::getNickname);
-        pos.setItems(posService.findAll());
-        pos.setReadOnly(true);
+        payType.setEmptySelectionAllowed(false);
 
         type.setErrorMessage(ERROR_NOT_BLANK);
         status.setErrorMessage(ERROR_NOT_BLANK);
@@ -160,7 +177,7 @@ public class TicketEditor extends Dialog {
                 issueDate,departureDate,reservationNumber,ticketNumber,
                 flightRoute,type, status,
                 tariffPrice, taxYQPrice, taxRUYRPrice, totalPrice,
-                payType, pos, comment
+                payType, pointOfSales, comment
 
         );
 
@@ -191,7 +208,7 @@ public class TicketEditor extends Dialog {
         buttonLayout.getStyle().set("flex-wrap", "wrap");
         buttonLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
 
-        Div dialogLayout = new Div(headline, formLayout, buttonLayout);
+        Div dialogLayout = new Div(titleBar, formLayout, buttonLayout);
 
         add(dialogLayout);
     }
@@ -216,6 +233,11 @@ public class TicketEditor extends Dialog {
 
     private void save() {
         if(validate()) {
+            if(ticket != null) {
+                if (ticket.getAuthor() == null) {
+                    ticket.setAuthor(currentUser);
+                }
+            }
             ticketService.save(ticket);
             changeHandler.onChange();
             Notification.show("Билет был успешно сохранен");
@@ -236,13 +258,27 @@ public class TicketEditor extends Dialog {
             return;
         }
         open();
+
+        PointOfSales activePos;
         if(t.getId() != null) {
-            setHeaderTitle("Редактирование билета");
+            //edit Ticket
             this.ticket = ticketService.findById(t.getId(), t);
+            String authorName = "Автор: " + ticket.getAuthor().getFirstName() + " " + ticket.getAuthor().getLastName().charAt(0) + ".";
+            authorTitle.setText(authorName);
+
+            activePos = this.ticket.getPos();
         } else {
-            setHeaderTitle("Новый билет");
+            //new Ticket
+            String authorName = "Автор: " + currentUser.getFirstName() +" " + currentUser.getLastName().charAt(0) + ".";
+            authorTitle.setText(authorName);
+
+            Preferences pref = Preferences.userRoot();
+            activePos = posService.findById(pref.getLong("pos", ID_DEFAULT_POS), new PointOfSales());
+
+            t.setPos(activePos);
             this.ticket = t;
         }
+        pointOfSales.setValue(activePos.getNickname());
 
         binder.setBean(ticket);
     }

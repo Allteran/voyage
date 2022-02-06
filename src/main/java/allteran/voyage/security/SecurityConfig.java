@@ -25,6 +25,7 @@ public class SecurityConfig extends VaadinWebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         super.configure(http);
         setLoginView(http, LoginView.class);
+        http.formLogin().defaultSuccessUrl("/pos-select", true);
     }
 
     /**

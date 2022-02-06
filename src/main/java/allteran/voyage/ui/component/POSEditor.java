@@ -1,7 +1,7 @@
 package allteran.voyage.ui.component;
 
-import allteran.voyage.domain.TicketType;
-import allteran.voyage.service.TicketTypeService;
+import allteran.voyage.domain.PointOfSales;
+import allteran.voyage.service.POSService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -20,13 +20,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @SpringComponent
 @UIScope
-public class TicketTypeEditor extends Dialog {
-    private final TicketTypeService typeService;
-    private TicketType type;
+public class POSEditor extends Dialog {
+    private final POSService posService;
+    private PointOfSales pos;
 
-    private Binder<TicketType> binder = new Binder<>(TicketType.class);
+    private Binder<PointOfSales> binder = new Binder<>(PointOfSales.class);
 
-    private TextField name;
+    private TextField nickname;
+    private TextField address;
 
     @Setter
     private ChangeHandler changeHandler;
@@ -36,8 +37,8 @@ public class TicketTypeEditor extends Dialog {
     }
 
     @Autowired
-    public TicketTypeEditor(TicketTypeService typeService) {
-        this.typeService = typeService;
+    public POSEditor(POSService posService) {
+        this.posService = posService;
         createDialog();
 
         binder.bindInstanceFields(this);
@@ -48,18 +49,25 @@ public class TicketTypeEditor extends Dialog {
     }
 
     private void createDialog() {
-        H2  headline = new H2("Тип билета");
+        H2 headline = new H2("Точка продаж");
         headline.getStyle().set("margin", "var(--lumo-space-m) 0 0 0")
                 .set("font-size", "1.5em").set("font-weight", "bold");
-        name = new TextField("Наименование");
 
-        FormLayout form = new FormLayout(name);
+        nickname = new TextField("Наименование");
+        address = new TextField("Адрес точки");
 
-        Button saveButton = new Button("Сохранить");
+        FormLayout formLayout = new FormLayout(nickname, address);
+
+        formLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 2));
+
+        formLayout.setColspan(nickname, 1);
+        formLayout.setColspan(address, 1);
+
+        Button saveButton = new com.vaadin.flow.component.button.Button("Сохранить");
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         saveButton.addClickListener( e -> save());
 
-        Button cancelButton = new Button("Отмена");
+        Button cancelButton = new com.vaadin.flow.component.button.Button("Отмена");
         cancelButton.addClickListener( e-> discardChanges());
 
         Button deleteButton = new Button("Удалить");
@@ -71,54 +79,57 @@ public class TicketTypeEditor extends Dialog {
         buttonLayout.getStyle().set("flex-wrap", "wrap");
         buttonLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
 
-        Div dialogLayout = new Div(headline, form, buttonLayout);
+        Div dialogLayout = new Div(headline, formLayout, buttonLayout);
 
         add(dialogLayout);
     }
 
-    private void save() {
-        if(!name.isEmpty()) {
-            typeService.save(type);
-            changeHandler.onChange();
-            Notification.show("Тип билета был успешно сохранен");
-            close();
-        } else {
-            name.setErrorMessage("Поле не может быть пустым");
-            name.setInvalid(true);
-        }
-    }
-
-    private void discardChanges() {
-        name.clear();
-        close();
-    }
-
     private void delete() {
-        if(type.getId() == null) {
-            name.clear();
+        nickname.clear();
+        address.clear();
+        if(pos.getId() == null) {
             Notification.show("Нечего удалять :)");
             close();
             return;
         }
-        typeService.delete(type);
+        posService.delete(pos);
         changeHandler.onChange();
-        Notification.show("Выбраный тип был удален");
-        name.clear();
+        Notification.show("Выбраная точка продаж была удалена");
         close();
     }
 
-    public void editType(TicketType t) {
-        if(t == null) {
+    private void discardChanges() {
+        nickname.clear();
+        address.clear();
+        close();
+    }
+
+    private void save() {
+        if(nickname.isEmpty() || address.isEmpty()) {
+            nickname.setErrorMessage("Необходимо заполнить");
+            address.setErrorMessage("Необходимо заполнить");
+            nickname.setInvalid(true);
+            address.setInvalid(true);
+        } else {
+            posService.save(pos);
+            Notification.show("Точка продаж была успешно сохранена");
+            changeHandler.onChange();
+            close();
+        }
+    }
+
+    public void editPOS(PointOfSales p) {
+        if (p == null) {
             close();
             return;
         }
         open();
-        if(t.getId() != null) {
-            this.type = typeService.findById(t.getId(), t);
+        if(p.getId() != null) {
+            this.pos = posService.findById(p.getId(), p);
         } else {
-            this.type = t;
+            this.pos = p;
         }
 
-        binder.setBean(type);
+        binder.setBean(pos);
     }
 }

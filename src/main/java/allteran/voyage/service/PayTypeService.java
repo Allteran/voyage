@@ -19,4 +19,16 @@ public class PayTypeService {
     public List<PayType> findAll() {
         return payTypeRepo.findAll();
     }
+
+    public void delete(PayType payType) {
+        payTypeRepo.delete(payType);
+    }
+
+    public PayType save(PayType payType) {
+        return payTypeRepo.save(payType);
+    }
+
+    public PayType findById(Long id, PayType p) {
+        return payTypeRepo.findById(id).orElse(p);
+    }
 }

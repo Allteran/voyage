@@ -19,4 +19,16 @@ public class TicketStatusService {
     public List<TicketStatus> findAll() {
         return statusRepo.findAll();
     }
+
+    public TicketStatus save(TicketStatus status) {
+        return statusRepo.save(status);
+    }
+
+    public void delete(TicketStatus status) {
+        statusRepo.delete(status);
+    }
+
+    public TicketStatus findById(Long id, TicketStatus s) {
+        return statusRepo.findById(id).orElse(s);
+    }
 }
