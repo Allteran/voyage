@@ -290,7 +290,6 @@ public class TicketEditor extends Dialog {
         reservationNumber.setInvalid(reservationNumber.isEmpty());
         ticketNumber.setInvalid(ticketNumber.isEmpty());
         flightRoute.setInvalid(flightRoute.isEmpty());
-        comment.setInvalid(comment.isEmpty());
 
         issueDate.setInvalid(issueDate.isEmpty());
         departureDate.setInvalid(departureDate.isEmpty());
