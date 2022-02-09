@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -40,7 +42,11 @@ public class UserService implements UserDetailsService {
         if(userFromDb != null) {
             return false;
         }
-        user.setRoles(Collections.singleton(Role.USER));
+        Set<Role> roles = new HashSet<>();
+        roles.add(Role.ADMIN);
+        roles.add(Role.USER);
+        user.setRoles(roles);
+//        user.setRoles(Collections.singleton(Role.USER));
         user.setCreationDate(LocalDate.now());
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setActive(true);
