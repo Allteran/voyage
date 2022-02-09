@@ -42,11 +42,7 @@ public class UserService implements UserDetailsService {
         if(userFromDb != null) {
             return false;
         }
-        Set<Role> roles = new HashSet<>();
-        roles.add(Role.ADMIN);
-        roles.add(Role.USER);
-        user.setRoles(roles);
-//        user.setRoles(Collections.singleton(Role.USER));
+        user.setRoles(Collections.singleton(Role.USER));
         user.setCreationDate(LocalDate.now());
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setActive(true);
