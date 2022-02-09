@@ -42,3 +42,8 @@ package-lock.json
 webpack.config.js
 webpack.generated.js
 /frontend/
+/pnpm-lock.yaml
+/pnpmfile.js
+/tsconfig.json
+/types.d.ts
+/.npmrc
