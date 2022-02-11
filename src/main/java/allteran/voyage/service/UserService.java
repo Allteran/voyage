@@ -14,8 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -64,10 +62,10 @@ public class UserService implements UserDetailsService {
     }
 
     public User updateUser(User userFromDb, User user){
-        boolean isPasswordsMatches = isPasswordsMatches(user.getPassword(), userFromDb.getPassword());
-        if(user.getPassword() != null){
+        if(user.getNewPassword() != null){
+            boolean isPasswordsMatches = isPasswordsMatches(user.getPassword(), userFromDb.getPassword());
             if(isPasswordsMatches) {
-                userFromDb.setPassword(passwordEncoder.encode(user.getPassword()));
+                userFromDb.setPassword(passwordEncoder.encode(user.getNewPassword()));
             } else {
                 throw new IncorrectPasswordException("Текущий введен неверно");
             }

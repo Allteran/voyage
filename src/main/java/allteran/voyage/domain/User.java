@@ -30,6 +30,9 @@ public class User implements UserDetails {
 
     @Transient
     private String passwordConfirm;
+    @Transient
+    private String newPassword;
+
     private boolean active;
 
     private LocalDate creationDate;

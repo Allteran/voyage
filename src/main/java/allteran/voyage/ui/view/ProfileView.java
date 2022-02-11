@@ -1,7 +1,6 @@
 package allteran.voyage.ui.view;
 
 import allteran.voyage.domain.User;
-import allteran.voyage.exception.IncorrectPasswordException;
 import allteran.voyage.security.SecurityService;
 import allteran.voyage.service.UserService;
 import com.vaadin.flow.component.Component;
@@ -14,6 +13,7 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
@@ -29,9 +29,12 @@ import javax.annotation.security.PermitAll;
 @PermitAll
 @PageTitle("Профиль | VOYAGE")
 public class ProfileView extends Div {
-    private static final String AFTER_EDIT_REDIRECT_URL = "/tickets";
+    private static final String AFTER_EDIT_REDIRECT_URL = "/";
+    private static final String NOT_BLANK_MESSAGE = "Поле не может быть пустым";
+
     private final SecurityService securityService;
     private final UserService userService;
+
 
     private Binder<User> binder = new Binder<>(User.class);
 
@@ -52,7 +55,6 @@ public class ProfileView extends Div {
         this.securityService = securityService;
         this.userService = userService;
         changePasswordDialog = createChangePasswordDialog();
-        currentUser = (User) securityService.getAuthenticatedUser();
 
         getStyle()
                 .set("display", "block")
@@ -65,15 +67,24 @@ public class ProfileView extends Div {
         add(createButtonLayout());
 
         binder.bindInstanceFields(this);
-        fillProfileForm();
+
+        currentUser = (User) securityService.getAuthenticatedUser();
+        binder.setBean(currentUser);
 
         cancelButton.addClickListener(e -> {
             binder.setBean(new User());
             UI.getCurrent().getPage().setLocation(AFTER_EDIT_REDIRECT_URL);
         });
-        saveButton.addClickListener(e -> Notification.show("UPDATED"));
+        saveButton.addClickListener(e -> updateProfile());
         changePasswordButton.addClickListener(e-> changePasswordDialog.open());
     }
+
+    private void updateProfile() {
+        User userFromDb = userService.findById(currentUser.getId());
+        userService.updateUser(userFromDb, currentUser);
+        Notification.show("Профиль успешно изменен. Перезайдите в систему, чтобы изменения вступили в силу").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+    }
+
 
     private Component createTitle() {
         return new H3("Профиль пользователя");
@@ -106,11 +117,6 @@ public class ProfileView extends Div {
         return buttonLayout;
     }
 
-    private void fillProfileForm() {
-        User profile = (User) securityService.getAuthenticatedUser();
-        binder.setBean(profile);
-    }
-
     private Dialog createChangePasswordDialog() {
         Dialog dialog = new Dialog();
 
@@ -118,22 +124,21 @@ public class ProfileView extends Div {
         headline.getStyle().set("margin", "var(--lumo-space-m) 0 0 0")
                 .set("font-size", "1.5em").set("font-weight", "bold");
 
-        PasswordField current = new PasswordField("Текущий пароль");
+        PasswordField currentPassword = new PasswordField("Текущий пароль");
         PasswordField newPassword = new PasswordField("Новый пароль");
         PasswordField newPasswordConfirm = new PasswordField("Повторите новый пароль");
 
         FormLayout dialogForm = new FormLayout();
 
         dialogForm.add(
-                current,
+                currentPassword,
                 newPassword, newPasswordConfirm);
 
-        dialogForm.setResponsiveSteps(// Use one column by default
+        dialogForm.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
-                // Use two columns, if layout's width exceeds 500px
                 new FormLayout.ResponsiveStep("500px", 2));
 
-        dialogForm.setColspan(current, 2);
+        dialogForm.setColspan(currentPassword, 2);
 
         Button save = new Button("Сохранить");
         Button cancel = new Button("Отмена");
@@ -150,20 +155,21 @@ public class ProfileView extends Div {
                         newPasswordConfirm.setInvalid(true);
                         return;
                     }
-                    if(userService.isPasswordsMatches(current.getValue(), fromDb.getPassword())) {
-                        currentUser.setPassword(newPassword.getValue());
+                    if(userService.isPasswordsMatches(currentPassword.getValue(), fromDb.getPassword())) {
+                        currentUser.setPassword(currentPassword.getValue());
+                        currentUser.setNewPassword(newPassword.getValue());
                         userService.updateUser(fromDb, currentUser);
-                        Notification.show("Пароль был изменен успешно");
-                        clearPasswordForm(current, newPassword, newPasswordConfirm);
+                        Notification.show("Пароль был изменен успешно").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                        clearPasswordForm(currentPassword, newPassword, newPasswordConfirm);
                         dialog.close();
                     } else {
-                        current.setErrorMessage("Текущий пароль введен неверно");
-                        current.setInvalid(true);
+                        currentPassword.setErrorMessage("Текущий пароль введен неверно");
+                        currentPassword.setInvalid(true);
                     }
                 }
         );
         cancel.addClickListener(e -> {
-            clearPasswordForm(current, newPassword, newPasswordConfirm);
+            clearPasswordForm(currentPassword, newPassword, newPasswordConfirm);
             dialog.close();
         });
 

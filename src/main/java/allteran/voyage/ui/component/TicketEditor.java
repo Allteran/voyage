@@ -12,6 +12,7 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.select.Select;
@@ -100,6 +101,7 @@ public class TicketEditor extends Dialog {
         setResizable(true);
     }
 
+
     private void createDialogLayout() {
         H2 headline = new H2(headerTitle);
         headline.getStyle().set("font-size", "1.5em").set("font-weight", "bold");
@@ -145,9 +147,21 @@ public class TicketEditor extends Dialog {
         departureDate = new DatePicker("Дата вылета");
         dateOfBirth = new DatePicker("Дата рождения");
 
+        DatePicker.DatePickerI18n datePickerFormatter = new DatePicker.DatePickerI18n();
+        datePickerFormatter.setDateFormat("dd.MM.yyyy");
+
+        issueDate.setI18n(datePickerFormatter);
+        departureDate.setI18n(datePickerFormatter);
+        dateOfBirth.setI18n(datePickerFormatter);
+
+        issueDate.setPlaceholder("дд.мм.гггг");
+        departureDate.setPlaceholder("дд.мм.гггг");
+        dateOfBirth.setPlaceholder("дд.мм.гггг");
+
         issueDate.setErrorMessage(ERROR_NOT_BLANK);
         departureDate.setErrorMessage(ERROR_NOT_BLANK);
         dateOfBirth.setErrorMessage(ERROR_NOT_BLANK);
+
 
         type = new Select<>();
         type.setLabel("Тип выписки");
@@ -240,7 +254,7 @@ public class TicketEditor extends Dialog {
             }
             ticketService.save(ticket);
             changeHandler.onChange();
-            Notification.show("Билет был успешно сохранен");
+            Notification.show("Билет был успешно сохранен").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
             close();
         }
     }
@@ -248,7 +262,7 @@ public class TicketEditor extends Dialog {
     private void delete() {
         ticketService.delete(ticket);
         changeHandler.onChange();
-        Notification.show("Выбранный билет был удален");
+        Notification.show("Выбранный билет был удален").addThemeVariants(NotificationVariant.LUMO_PRIMARY);
         close();
     }
 
@@ -286,8 +300,6 @@ public class TicketEditor extends Dialog {
     private boolean validate() {
         customer.setInvalid(customer.isEmpty());
         customerPhone.setInvalid(!customerPhone.getValue().matches("\\^?(79)\\d{9}"));
-        passport.setInvalid(passport.isEmpty());
-        reservationNumber.setInvalid(reservationNumber.isEmpty());
         ticketNumber.setInvalid(ticketNumber.isEmpty());
         flightRoute.setInvalid(flightRoute.isEmpty());
 
@@ -299,7 +311,7 @@ public class TicketEditor extends Dialog {
         status.setInvalid(status.isEmpty());
         payType.setInvalid(payType.isEmpty());
 
-        boolean invalid =  customer.isEmpty() || !customerPhone.getValue().matches("\\^?(79)\\d{9}") || passport.isEmpty() ||
+        boolean invalid =  customer.isEmpty() || !customerPhone.getValue().matches("\\^?(79)\\d{9}") ||
                 reservationNumber.isEmpty() || ticketNumber.isEmpty() || flightRoute.isEmpty() || comment.isEmpty() ||
                 issueDate.isEmpty() || departureDate.isEmpty() || dateOfBirth.isEmpty() || type.isEmpty() || status.isEmpty() || payType.isEmpty();
 

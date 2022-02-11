@@ -9,6 +9,7 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -80,7 +81,7 @@ public class TicketTypeEditor extends Dialog {
         if(!name.isEmpty()) {
             typeService.save(type);
             changeHandler.onChange();
-            Notification.show("Тип билета был успешно сохранен");
+            Notification.show("Тип билета был успешно сохранен").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
             close();
         } else {
             name.setErrorMessage("Поле не может быть пустым");
@@ -102,7 +103,7 @@ public class TicketTypeEditor extends Dialog {
         }
         typeService.delete(type);
         changeHandler.onChange();
-        Notification.show("Выбраный тип был удален");
+        Notification.show("Выбраный тип был удален").addThemeVariants(NotificationVariant.LUMO_PRIMARY);
         name.clear();
         close();
     }

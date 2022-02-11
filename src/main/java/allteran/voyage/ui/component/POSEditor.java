@@ -9,6 +9,7 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -94,7 +95,7 @@ public class POSEditor extends Dialog {
         }
         posService.delete(pos);
         changeHandler.onChange();
-        Notification.show("Выбраная точка продаж была удалена");
+        Notification.show("Выбраная точка продаж была удалена").addThemeVariants(NotificationVariant.LUMO_PRIMARY);
         close();
     }
 
@@ -112,7 +113,7 @@ public class POSEditor extends Dialog {
             address.setInvalid(true);
         } else {
             posService.save(pos);
-            Notification.show("Точка продаж была успешно сохранена");
+            Notification.show("Точка продаж была успешно сохранена").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
             changeHandler.onChange();
             close();
         }
