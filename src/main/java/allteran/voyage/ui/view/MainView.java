@@ -115,7 +115,7 @@ public class MainView extends AppLayout {
         Tabs tabs = new Tabs();
 
         tabs.add(createTab(VaadinIcon.AIRPLANE, "Список билетов", TicketsView.class));
-        tabs.add(createTab(VaadinIcon.ARCHIVE, "Отчеты", TicketsView.class));
+        tabs.add(createTab(VaadinIcon.ARCHIVE, "Ежедневный отчет", DailyReportView.class));
         tabs.add(createTab(VaadinIcon.CHART, "Аналитика", TicketsView.class));
 
         // Now display items that available only for admin

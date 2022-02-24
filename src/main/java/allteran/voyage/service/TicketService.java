@@ -50,6 +50,10 @@ public class TicketService {
         return ticketRepo.save(ticket);
     }
 
+    public List<Ticket> findAllByIssueDate(LocalDate date) {
+        return ticketRepo.findAllByIssueDate(date);
+    }
+
 
 //    @PostConstruct
 //    public void init() {

@@ -3,7 +3,9 @@ package allteran.voyage.repo;
 import allteran.voyage.domain.Ticket;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface TicketRepo extends JpaRepository<Ticket, Long> {
@@ -11,4 +13,6 @@ public interface TicketRepo extends JpaRepository<Ticket, Long> {
 
     @Query("select t from Ticket t order by t.issueDate")
     List<Ticket> findAllSorted();
+
+    List<Ticket> findAllByIssueDate(@Param("date") LocalDate date);
 }
