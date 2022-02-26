@@ -1,18 +1,13 @@
 package allteran.voyage.service;
 
 import allteran.voyage.domain.Ticket;
-import allteran.voyage.domain.TicketStatus;
-import allteran.voyage.domain.TicketType;
 import allteran.voyage.repo.TicketRepo;
 import allteran.voyage.repo.TicketStatusRepo;
 import allteran.voyage.repo.TicketTypeRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -32,7 +27,7 @@ public class TicketService {
         return ticketRepo.findAll();
     }
 
-    public List<Ticket> findAllSortedByIssueDate() {return ticketRepo.findAllSorted();}
+    public List<Ticket> findAllSortedByIssueDate() {return ticketRepo.findAllSortedByIssueDate();}
 
     public List<Ticket> findByCustomer(String customer) {
         return ticketRepo.findAllByCustomer(customer);
@@ -50,8 +45,8 @@ public class TicketService {
         return ticketRepo.save(ticket);
     }
 
-    public List<Ticket> findAllByIssueDate(LocalDate date) {
-        return ticketRepo.findAllByIssueDate(date);
+    public List<Ticket> findByIssueDate(LocalDate date) {
+        return ticketRepo.findByIssueDate(date);
     }
 
 

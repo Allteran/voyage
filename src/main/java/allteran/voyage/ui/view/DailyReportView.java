@@ -78,7 +78,7 @@ public class DailyReportView extends Div {
                     }
                 }).setSortable(true);
 
-        LitRenderer<Ticket> typeRenderer = LitRenderer.<Ticket>of("[[item.type.name]]")
+        LitRenderer<Ticket> typeRenderer = LitRenderer.<Ticket>of("${item.type.name}")
                 .withProperty("type", Ticket::getType);
         grid.addColumn(typeRenderer).setHeader("Тип выписки").setSortable(true);
         grid.addColumn(Ticket::getFlightRoute).setHeader("Маршрут").setSortable(true);
@@ -87,8 +87,7 @@ public class DailyReportView extends Div {
         grid.addColumn(Ticket::getTaxRUYRPrice).setHeader("Такса RU/YR").setSortable(true);
         grid.addColumn(Ticket::getTotalPrice).setHeader("Сумма").setSortable(true);
 
-        //TODO: RENDERER ISNT WORKING
-        LitRenderer<Ticket>payTypeRenderer = LitRenderer.<Ticket>of("[[item.payType.name]]")
+        LitRenderer<Ticket>payTypeRenderer = LitRenderer.<Ticket>of("${item.payType.name}")
                 .withProperty("payType", Ticket::getPayType);
         grid.addColumn(payTypeRenderer).setHeader("Тип оплаты").setSortable(true);
         grid.addColumn(Ticket::getComment).setHeader("Комментарий").setSortable(false);
@@ -105,7 +104,7 @@ public class DailyReportView extends Div {
 
         dateFilter.setWidth("30%");
 
-        searchButton.addClickListener(e -> grid.setItems(ticketService.findAllByIssueDate(dateFilter.getValue())));
+        searchButton.addClickListener(e -> grid.setItems(ticketService.findByIssueDate(dateFilter.getValue())));
 
         return dateFilter;
     }

@@ -12,7 +12,8 @@ public interface TicketRepo extends JpaRepository<Ticket, Long> {
     List<Ticket> findAllByCustomer(String customer);
 
     @Query("select t from Ticket t order by t.issueDate")
-    List<Ticket> findAllSorted();
+    List<Ticket> findAllSortedByIssueDate();
 
-    List<Ticket> findAllByIssueDate(@Param("date") LocalDate date);
+    @Query("from Ticket t where t.issueDate =:date order by t.type.id")
+    List<Ticket> findByIssueDate(@Param("date") LocalDate date);
 }

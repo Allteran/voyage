@@ -311,9 +311,10 @@ public class TicketEditor extends Dialog {
         status.setInvalid(status.isEmpty());
         payType.setInvalid(payType.isEmpty());
 
-        boolean invalid =  customer.isEmpty() || !customerPhone.getValue().matches("\\^?(79)\\d{9}") ||
-                reservationNumber.isEmpty() || ticketNumber.isEmpty() || flightRoute.isEmpty() || comment.isEmpty() ||
-                issueDate.isEmpty() || departureDate.isEmpty() || dateOfBirth.isEmpty() || type.isEmpty() || status.isEmpty() || payType.isEmpty();
+        boolean invalid =  customer.isEmpty()
+                || !customerPhone.getValue().matches("\\^?(79)\\d{9}") || ticketNumber.isEmpty() || flightRoute.isEmpty()
+                || issueDate.isEmpty() || departureDate.isEmpty() || dateOfBirth.isEmpty() || type.isEmpty() || status.isEmpty()
+                || payType.isEmpty();
 
         return !invalid;
     }
